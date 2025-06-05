@@ -1,99 +1,156 @@
 import SwiftUI
 
-// Model for each color block
-struct ColorBlock: Identifiable {
-    let id = UUID()
-    var color: Color
-    var isMatched: Bool = false
-    var isSelected: Bool = false
-}
-
-// ViewModel for game logic
-class GameViewModel: ObservableObject {
-    @Published var blocks: [ColorBlock] = []
-    @Published var selectedIndices: [Int] = []
-
-    let gridSize = 4 // 4x4 Grid
-
-    init() {
-        startGame()
-    }
-
-    func startGame() {
-        let baseColors: [Color] = [.red, .green, .blue, .yellow, .orange, .purple, .pink, .cyan]
-        var colors = baseColors + baseColors // two of each color
-        colors.shuffle()
-
-        blocks = colors.map { ColorBlock(color: $0) }
-        selectedIndices = []
-    }
-
-    func selectBlock(at index: Int) {
-        guard !blocks[index].isMatched else { return }
-        guard !selectedIndices.contains(index) else { return }
-
-        blocks[index].isSelected = true
-        selectedIndices.append(index)
-
-        if selectedIndices.count == 2 {
-            checkMatch()
-        }
-    }
-
-    func checkMatch() {
-        let firstIndex = selectedIndices[0]
-        let secondIndex = selectedIndices[1]
-
-        if blocks[firstIndex].color == blocks[secondIndex].color {
-            blocks[firstIndex].isMatched = true
-            blocks[secondIndex].isMatched = true
-        }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            self.blocks[firstIndex].isSelected = false
-            self.blocks[secondIndex].isSelected = false
-            self.selectedIndices = []
-        }
-    }
-}
-
-// Main game view
 struct ContentView: View {
-    @StateObject private var viewModel = GameViewModel()
-
+    @State private var email: String = ""
+    @State private var password: String = ""
+    @State private var rememberMe: Bool = false
+    
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Color Matching Game")
-                .font(.largeTitle)
-                .padding()
-
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: viewModel.gridSize), spacing: 10) {
-                ForEach(viewModel.blocks.indices, id: \.self) { index in
-                    let block = viewModel.blocks[index]
-                    Rectangle()
-                        .fill(block.isMatched || block.isSelected ? block.color : Color.gray)
-                        .frame(height: 60)
-                        .cornerRadius(8)
-                        .onTapGesture {
-                            viewModel.selectBlock(at: index)
-                        }
-                        .animation(.easeInOut, value: block.isSelected)
+        VStack(alignment: .leading, spacing: 0) {
+            // Back arrow
+            Button(action: {
+                // Handle back action
+            }) {
+                Image(systemName: "chevron.left")
+                    .font(.title)
+                    .foregroundColor(.black)
+            }
+            .padding(.leading, 24)
+            .padding(.top, 24)
+            
+            // Title
+            VStack(alignment: .leading, spacing: 0) {
+                (
+                    Text("Login to")
+                        .foregroundColor(.black)
+                    + Text(" Your")
+                        .foregroundColor(.blue)
+                    + Text(" Account")
+                        .foregroundColor(.black)
+                )
+                .font(.system(size: 48, weight: .bold))
+            }
+            .padding(.leading, 35)
+            .padding(.top, 16)
+            
+            Spacer()
+            
+            // Input fields
+            VStack(spacing: 20) {
+                TextField("Email", text: $email)
+                    .autocapitalization(.none)
+                    .keyboardType(.emailAddress)
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+                
+                SecureField("Password", text: $password)
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(8)
+            }
+            .padding(.horizontal, 32)
+            .frame(maxWidth: .infinity)
+            
+            // Remember me (centered)
+            HStack {
+                Spacer()
+                Button(action: { rememberMe.toggle() }) {
+                    Image(systemName: rememberMe ? "checkmark.square.fill" : "square")
+                        .foregroundColor(rememberMe ? .blue : .gray)
                 }
+                Text("Remember me")
+                    .font(.body)
+                Spacer()
             }
-
-            Button("Restart Game") {
-                viewModel.startGame()
+            .padding(.horizontal, 32)
+            .padding(.top, 16)
+            
+            // Sign in button
+            Button(action: {
+                // Handle sign in
+            }) {
+                Text("Sign In")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(24)
+                    .font(.headline)
             }
-            .padding()
-            .background(Color.blue)
-            .foregroundColor(.white)
-            .cornerRadius(10)
+            .padding(.horizontal, 32)
+            .padding(.top, 16)
+            
+            // Forgot password
+            HStack {
+                Spacer()
+                Button(action: {
+                    // Handle forgot password
+                }) {
+                    Text("Forgot Password?")
+                        .foregroundColor(.blue)
+                        .font(.footnote)
+                }
+                Spacer()
+            }
+            .padding(.top, 8)
+            
+            // Or continue with
+            HStack(alignment: .center) {
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(.black)
+                Text("or continue")
+                    .foregroundColor(.black)
+                    .font(.footnote)
+                    .padding(.horizontal, 8)
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundColor(.black)
+            }
+            .padding(.horizontal, 32)
+            .padding(.vertical, 16)
+            
+            // Social icons (centered)
+            HStack(spacing: 24) {
+                Spacer()
+                ForEach(["facebook", "google", "apple"], id: \.self) { icon in
+                    Button(action: {
+                        // Handle social login
+                    }) {
+                        ZStack {
+                            Circle()
+                                .fill(Color(.systemGray6))
+                                .frame(width: 44, height: 44)
+                            Image(icon + ".logo")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 24, height: 24)
+                        }
+                    }
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 32)
+            
+            // Don't have an account
+            HStack {
+                Spacer()
+                Button(action: {
+                    // Handle sign up
+                }) {
+                    Text("Don't have an account?")
+                        .foregroundColor(.blue)
+                        .font(.footnote)
+                }
+                Spacer()
+            }
+            .padding(.top, 16)
+            Spacer()
         }
-        .padding()
     }
 }
 
-// Xcode preview
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
